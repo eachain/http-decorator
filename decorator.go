@@ -24,6 +24,20 @@ func WithRecovery(handler http.Handler) http.Handler {
 	})
 }
 
+// WithHost 只允许通过request.header.host == host的请求
+func WithHost(host string, handler http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Host != host {
+			log.Printf("uri = %v, bad request: %v",
+				r.URL.Path, r.Host)
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte(http.StatusText(http.StatusBadRequest)))
+			return
+		}
+		handler.ServeHTTP(w, r)
+	})
+}
+
 // WithMethod 只允许以某一种调用方式调用接口
 func WithMethod(method string, handler http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

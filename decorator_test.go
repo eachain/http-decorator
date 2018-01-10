@@ -39,6 +39,32 @@ func TestWithRecovery(t *testing.T) {
 	}
 }
 
+func TestWithHost(t *testing.T) {
+	const URL = "/host"
+	decMux.Handle(URL, decorator.WithHost("www.eachain.com", http.HandlerFunc(func(http.ResponseWriter, *http.Request) {})))
+
+	testDo := func(host string, status int) {
+		req, err := http.NewRequest("GET", decServer.URL+URL, nil)
+		if err != nil {
+			t.Errorf("test %v new request error: %v", URL, err)
+		}
+		req.Host = host
+		resp, err := decClient.Do(req)
+		if err != nil {
+			t.Errorf("test %v error: %v", URL, err)
+		}
+		resp.Body.Close()
+
+		if resp.StatusCode != status {
+			t.Errorf("test %v failed, status code: %v, status: %v", URL, resp.StatusCode, resp.Status)
+		}
+	}
+
+	testDo("www.eachain.com", http.StatusOK)
+	testDo("www.yichen.com", http.StatusBadRequest)
+	testDo("", http.StatusBadRequest)
+}
+
 func TestWithMethod(t *testing.T) {
 	const URL = "/method"
 	decMux.Handle(URL, decorator.WithMethod("GET", http.HandlerFunc(func(http.ResponseWriter, *http.Request) {})))
